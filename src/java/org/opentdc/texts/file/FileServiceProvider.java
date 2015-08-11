@@ -40,6 +40,7 @@ import org.opentdc.file.AbstractFileServiceProvider;
 import org.opentdc.texts.SingleLangText;
 import org.opentdc.texts.TextModel;
 import org.opentdc.texts.ServiceProvider;
+import org.opentdc.texts.TextType;
 import org.opentdc.service.LocalizedTextModel;
 import org.opentdc.service.exception.DuplicateException;
 import org.opentdc.service.exception.InternalServerErrorException;
@@ -150,6 +151,10 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 			throw new ValidationException("text <" + _id + 
 					"> must contain a valid title.");
 		}
+		if (text.getTextType() == null) {
+			logger.warning("text <" + _id + ">: default textType set to " + TextType.getDefaultTextType());
+			text.setTextType(TextType.getDefaultTextType());
+		}
 
 		text.setId(_id);
 		Date _date = new Date();
@@ -221,6 +226,7 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 		}
 		_text.setTitle(text.getTitle());
 		_text.setDescription(text.getDescription());
+		_text.setTextType(text.getTextType());
 		_text.setModifiedAt(new Date());
 		_text.setModifiedBy(getPrincipal());
 		_multiLangText.setModel(_text);
@@ -293,28 +299,22 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 	@Override
 	public LocalizedTextModel createText(
 			String tid, 
-			LocalizedTextModel tag)
+			LocalizedTextModel text)
 			throws DuplicateException, ValidationException {
-		if (tag.getText() == null || tag.getText().isEmpty()) {
-			throw new ValidationException("LocalizedText <" + tid + "/lang/" + tag.getId() + 
+		if (text.getText() == null || text.getText().isEmpty()) {
+			throw new ValidationException("LocalizedText <" + tid + "/lang/" + text.getId() + 
 					"> must contain a valid text.");
 		}
-		// enforce that the title is a single word
-		StringTokenizer _tokenizer = new StringTokenizer(tag.getText());
-		if (_tokenizer.countTokens() != 1) {
-			throw new ValidationException("LocalizedText <" + tid + "/lang/" + tag.getId() + 
-					"> must consist of exactly one word <" + tag.getText() + "> (is " + _tokenizer.countTokens() + ").");
-		}
 		MultiLangText _multiLangText = readMultiLangText(tid);
-		if (tag.getLanguageCode() == null) {
-			throw new ValidationException("LocalizedText <" + tid + "/lang/" + tag.getId() + 
+		if (text.getLanguageCode() == null) {
+			throw new ValidationException("LocalizedText <" + tid + "/lang/" + text.getId() + 
 					"> must contain a LanguageCode.");
 		}
-		if (_multiLangText.containsLocalizedText(tag.getLanguageCode())) {
-			throw new DuplicateException("LocalizedText with LanguageCode <" + tag.getLanguageCode() + 
+		if (_multiLangText.containsLocalizedText(text.getLanguageCode())) {
+			throw new DuplicateException("LocalizedText with LanguageCode <" + text.getLanguageCode() + 
 					"> exists already in tag <" + tid + ">.");
 		}
-		String _id = tag.getId();
+		String _id = text.getId();
 		if (_id == null || _id.isEmpty()) {
 			_id = UUID.randomUUID().toString();
 		} else {
@@ -328,20 +328,20 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 			}
 		}
 
-		tag.setId(_id);
+		text.setId(_id);
 		Date _date = new Date();
-		tag.setCreatedAt(_date);
-		tag.setCreatedBy(getPrincipal());
-		tag.setModifiedAt(_date);
-		tag.setModifiedBy(getPrincipal());
+		text.setCreatedAt(_date);
+		text.setCreatedBy(getPrincipal());
+		text.setModifiedAt(_date);
+		text.setModifiedBy(getPrincipal());
 		
-		textIndex.put(_id, tag);
-		_multiLangText.addText(tag);
-		logger.info("createText(" + tid + "/lang/" + tag.getId() + ") -> " + PrettyPrinter.prettyPrintAsJSON(tag));
+		textIndex.put(_id, text);
+		_multiLangText.addText(text);
+		logger.info("createText(" + tid + "/lang/" + text.getId() + ") -> " + PrettyPrinter.prettyPrintAsJSON(text));
 		if (isPersistent) {
 			exportJson(index.values());
 		}
-		return tag;
+		return text;
 	}
 
 	/* (non-Javadoc)
