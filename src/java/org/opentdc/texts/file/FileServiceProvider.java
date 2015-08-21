@@ -91,8 +91,8 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 	 */
 	@Override
 	public ArrayList<SingleLangText> list(
-		String queryType,
 		String query,
+		String queryType,
 		int position,
 		int size
 	) {
