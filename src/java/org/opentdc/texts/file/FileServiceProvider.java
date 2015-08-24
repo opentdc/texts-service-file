@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.opentdc.file.AbstractFileServiceProvider;
 import org.opentdc.texts.SingleLangText;
@@ -42,6 +43,7 @@ import org.opentdc.texts.TextModel;
 import org.opentdc.texts.ServiceProvider;
 import org.opentdc.texts.TextType;
 import org.opentdc.service.LocalizedTextModel;
+import org.opentdc.service.ServiceUtil;
 import org.opentdc.service.exception.DuplicateException;
 import org.opentdc.service.exception.InternalServerErrorException;
 import org.opentdc.service.exception.NotFoundException;
@@ -103,12 +105,12 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 			if (_lc != null) {	// return only the texts in this specific language
 				_ltm = _multiLangText.getLocalizedText(_lc);
 				if (_ltm != null) {
-					_texts.add(new SingleLangText(_multiLangText.getModel().getId(), _ltm, getPrincipal()));
+					_texts.add(new SingleLangText(_multiLangText.getModel().getId(), _ltm));
 				}
 			} else {	// return all texts in all languages
 				List<LocalizedTextModel> _locTexts = _multiLangText.getLocalizedTexts();
 				for (LocalizedTextModel _lm : _locTexts) {
-					_texts.add(new SingleLangText(_multiLangText.getModel().getId(), _lm, getPrincipal()));
+					_texts.add(new SingleLangText(_multiLangText.getModel().getId(), _lm));
 				}
 			}
 		}
@@ -129,6 +131,7 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 	 */
 	@Override
 	public TextModel create(
+		HttpServletRequest request,
 		TextModel text) 
 	throws DuplicateException, ValidationException {
 		logger.info("create(" + PrettyPrinter.prettyPrintAsJSON(text) + ")");
@@ -159,9 +162,9 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 		text.setId(_id);
 		Date _date = new Date();
 		text.setCreatedAt(_date);
-		text.setCreatedBy(getPrincipal());
+		text.setCreatedBy(ServiceUtil.getPrincipal(request));
 		text.setModifiedAt(_date);
-		text.setModifiedBy(getPrincipal());
+		text.setModifiedBy(ServiceUtil.getPrincipal(request));
 		_multiLangText = new MultiLangText();
 		_multiLangText.setModel(text);
 		index.put(_id, _multiLangText);
@@ -207,6 +210,7 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 	 */
 	@Override
 	public TextModel update(
+		HttpServletRequest request,
 		String id, 
 		TextModel text
 	) throws NotFoundException, ValidationException {
@@ -228,7 +232,7 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 		_text.setDescription(text.getDescription());
 		_text.setTextType(text.getTextType());
 		_text.setModifiedAt(new Date());
-		_text.setModifiedBy(getPrincipal());
+		_text.setModifiedBy(ServiceUtil.getPrincipal(request));
 		_multiLangText.setModel(_text);
 		index.put(id, _multiLangText);
 		logger.info("update(" + id + ") -> " + PrettyPrinter.prettyPrintAsJSON(_text));
@@ -298,6 +302,7 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 	 */
 	@Override
 	public LocalizedTextModel createText(
+			HttpServletRequest request,
 			String tid, 
 			LocalizedTextModel text)
 			throws DuplicateException, ValidationException {
@@ -331,9 +336,9 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 		text.setId(_id);
 		Date _date = new Date();
 		text.setCreatedAt(_date);
-		text.setCreatedBy(getPrincipal());
+		text.setCreatedBy(ServiceUtil.getPrincipal(request));
 		text.setModifiedAt(_date);
-		text.setModifiedBy(getPrincipal());
+		text.setModifiedBy(ServiceUtil.getPrincipal(request));
 		
 		textIndex.put(_id, text);
 		_multiLangText.addText(text);
@@ -368,6 +373,7 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 	 */
 	@Override
 	public LocalizedTextModel updateText(
+			HttpServletRequest request,
 			String tid, 
 			String lid,
 			LocalizedTextModel tag) 
@@ -402,7 +408,7 @@ public class FileServiceProvider extends AbstractFileServiceProvider<MultiLangTe
 		}
 		_localizedText.setText(tag.getText());
 		_localizedText.setModifiedAt(new Date());
-		_localizedText.setModifiedBy(getPrincipal());
+		_localizedText.setModifiedBy(ServiceUtil.getPrincipal(request));
 		textIndex.put(lid, _localizedText);
 		logger.info("updateText(" + tid + ", " + lid + ") -> " + PrettyPrinter.prettyPrintAsJSON(_localizedText));
 		if (isPersistent) {
